@@ -5,115 +5,66 @@
 @import "@fontsource/dm-sans/600.css";
 @import "@fontsource/dm-sans/700.css";
 
-@layer base {
-  :root {
-    /* Core palette - Slate/Navy enterprise feel */
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+@theme {
+  /* Font Family */
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+  /* Color Palette - Tailwind v4 automatically maps --color-* to classes */
+  --color-background: hsl(210 20% 98%);
+  --color-foreground: hsl(222 47% 11%);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222 47% 11%);
 
-    /* Navy blue primary - professional, trustworthy */
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(222 47% 11%);
 
-    --secondary: 215 20% 95%;
-    --secondary-foreground: 222 47% 11%;
+  --color-primary: hsl(221 83% 53%);
+  --color-primary-foreground: hsl(210 40% 98%);
 
-    --muted: 215 20% 95%;
-    --muted-foreground: 215 16% 47%;
+  --color-secondary: hsl(215 20% 95%);
+  --color-secondary-foreground: hsl(222 47% 11%);
 
-    --accent: 215 20% 93%;
-    --accent-foreground: 222 47% 11%;
+  --color-muted: hsl(215 20% 95%);
+  --color-muted-foreground: hsl(215 16% 47%);
 
-    /* Status colors - muted, enterprise */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+  --color-accent: hsl(215 20% 93%);
+  --color-accent-foreground: hsl(222 47% 11%);
 
-    --success: 160 60% 45%;
-    --success-foreground: 210 40% 98%;
+  --color-destructive: hsl(0 72% 51%);
+  --color-destructive-foreground: hsl(210 40% 98%);
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
+  --color-border: hsl(214 32% 91%);
+  --color-input: hsl(214 32% 91%);
+  --color-ring: hsl(221 83% 53%);
 
-    --info: 199 89% 48%;
-    --info-foreground: 210 40% 98%;
-
-    /* Severity colors */
-    --severity-critical: 0 72% 51%;
-    --severity-high: 25 95% 53%;
-    --severity-medium: 38 92% 50%;
-    --severity-low: 199 89% 48%;
-
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
-
-    --radius: 0.5rem;
-
-    /* Sidebar - subtle, professional */
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 215 20% 75%;
-    --sidebar-primary: 221 83% 65%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 40% 16%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 40% 18%;
-    --sidebar-ring: 221 83% 53%;
-    --sidebar-muted: 215 16% 47%;
-  }
-
-  .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 221 83% 65%;
-    --primary-foreground: 222 47% 11%;
-
-    --secondary: 222 40% 16%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 222 40% 16%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 222 40% 16%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 222 40% 18%;
-    --input: 222 40% 18%;
-    --ring: 221 83% 65%;
-
-    --sidebar-background: 222 47% 5%;
-    --sidebar-foreground: 215 20% 75%;
-    --sidebar-primary: 221 83% 65%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 40% 12%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 40% 12%;
-    --sidebar-ring: 221 83% 65%;
-    --sidebar-muted: 215 16% 47%;
-  }
+  /* Border Radius */
+  --radius-sm: calc(0.5rem - 4px);
+  --radius-md: calc(0.5rem - 2px);
+  --radius-lg: 0.5rem;
 }
 
-html {
-  font-family: "DM Sans", system-ui, sans-serif;
-}
+/* Dark Mode Overrides */
+@variant dark (&:where(.dark, .dark *));
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.dark {
+  --color-background: hsl(222 47% 6%);
+  --color-foreground: hsl(210 40% 98%);
+  --color-card: hsl(222 47% 8%);
+  --color-card-foreground: hsl(210 40% 98%);
+  --color-popover: hsl(222 47% 8%);
+  --color-popover-foreground: hsl(210 40% 98%);
+  --color-primary: hsl(221 83% 65%);
+  --color-primary-foreground: hsl(222 47% 11%);
+  --color-secondary: hsl(222 40% 16%);
+  --color-secondary-foreground: hsl(210 40% 98%);
+  --color-muted: hsl(222 40% 16%);
+  --color-muted-foreground: hsl(215 20% 65%);
+  --color-accent: hsl(222 40% 16%);
+  --color-accent-foreground: hsl(210 40% 98%);
+  --color-destructive: hsl(0 62% 50%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-border: hsl(222 40% 18%);
+  --color-input: hsl(222 40% 18%);
+  --color-ring: hsl(221 83% 65%);
 }

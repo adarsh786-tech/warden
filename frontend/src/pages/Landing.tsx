@@ -20,7 +20,7 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-2">
             <Shield className="h-7 w-7 text-primary" />
@@ -64,12 +64,12 @@ const Landing = () => {
 
       {/* Hero Section */}
       <section className="relative pt-16">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
         <div className="container mx-auto px-6">
           <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center text-center">
             <div className="animate-fade-in inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-4 py-1.5 text-sm text-muted-foreground mb-8">
               <Lock className="h-3.5 w-3.5" />
-              Enterprise-grade security compliance
+              Enterprise-grade security Compliance
             </div>
 
             <h1
