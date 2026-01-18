@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { href, NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   FileSearch,
@@ -6,6 +6,7 @@ import {
   FileText,
   Settings,
   Shield,
+  HomeIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -15,6 +16,7 @@ const navigation = [
   { name: "Violations", href: "/violations", icon: AlertTriangle },
   { name: "Reports", href: "/reports", icon: FileText },
   { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Home", href: "/", icon: HomeIcon },
 ];
 
 const Sidebar = () => {
