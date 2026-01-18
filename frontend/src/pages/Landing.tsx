@@ -16,6 +16,13 @@ import {
   Building2,
 } from "lucide-react";
 
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+} from "@clerk/clerk-react";
+
 const Landing = () => {
   return (
     <div className="min-h-screen bg-background">
@@ -54,11 +61,19 @@ const Landing = () => {
               Testimonials
             </a>
           </nav>
-          <Link to="/dashboard">
-            <Button variant="outline" size="sm">
-              Sign In
-            </Button>
-          </Link>
+          <header>
+            <SignedOut>
+              <SignInButton mode="modal" forceRedirectUrl="/dashboard">
+                <Button variant="outline" size="sm">
+                  Sign In
+                </Button>
+              </SignInButton>
+            </SignedOut>
+
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+          </header>
         </div>
       </header>
 
