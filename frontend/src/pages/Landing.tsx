@@ -22,14 +22,6 @@ import {
   SignInButton,
   UserButton,
 } from "@clerk/clerk-react";
-// <header>
-//   <SignedOut>
-//     <SignInButton />
-//   </SignedOut>
-//   <SignedIn>
-//     <UserButton />
-//   </SignedIn>
-// </header>
 
 const Landing = () => {
   return (
