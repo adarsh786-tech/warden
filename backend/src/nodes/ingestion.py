@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 from src.state import ComplianceState, DocumentBlock
 from src.config import Config
+import PyPDF2
 
 
 class IngestionNode:
@@ -17,7 +18,7 @@ class IngestionNode:
     """
     
     def __init__(self):
-        self.supported_extensions = {'.txt', '.md', '.py', '.json', '.yaml', '.yml', '.xml'}
+        self.supported_extensions = {'.txt', '.md', '.py', '.json', '.yaml', '.yml', '.xml', '.pdf'}
     
     def execute(self, state: ComplianceState) -> ComplianceState:
         """
@@ -33,8 +34,17 @@ class IngestionNode:
             state["processing_stage"] = "ingestion"
             
             # Collect all input paths
-            input_paths = self._gather_input_paths()
-            state["raw_input_paths"] = input_paths
+            # If paths are already in state (from API upload), use those
+            # Otherwise, gather from configured directories
+            if state.get("raw_input_paths"):
+                input_paths = state["raw_input_paths"]
+                if Config.VERBOSE:
+                    print(f"Using {len(input_paths)} uploaded file(s)")
+            else:
+                input_paths = self._gather_input_paths()
+                state["raw_input_paths"] = input_paths
+                if Config.VERBOSE:
+                    print(f"Gathered {len(input_paths)} file(s) from configured directories")
             
             # Process each file
             documents = []
@@ -91,8 +101,12 @@ class IngestionNode:
             List of document blocks (may split large files)
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            # Handle PDF files differently
+            if file_path.endswith('.pdf'):
+                content = self._extract_pdf_text(file_path)
+            else:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
             
             # Determine document type
             doc_type = self._classify_document_type(file_path, content)
@@ -121,6 +135,43 @@ class IngestionNode:
             print(f"Warning: Could not process {file_path}: {str(e)}")
             return []
     
+    def _extract_pdf_text(self, file_path: str) -> str:
+        """
+        Extract text from PDF file.
+        
+        Args:
+            file_path: Path to PDF file
+            
+        Returns:
+            Extracted text content
+        """
+        try:
+            
+            
+            text = []
+            with open(file_path, 'rb') as file:
+                pdf_reader = PyPDF2.PdfReader(file)
+                
+                if Config.VERBOSE:
+                    print(f"  Extracting text from PDF: {os.path.basename(file_path)} ({len(pdf_reader.pages)} pages)")
+                
+                for page_num, page in enumerate(pdf_reader.pages):
+                    page_text = page.extract_text()
+                    if page_text:
+                        text.append(page_text)
+            
+            extracted_text = '\n'.join(text)
+            
+            if not extracted_text.strip():
+                raise Exception("No text could be extracted from PDF")
+            
+            return extracted_text
+            
+        except ImportError:
+            raise Exception("PyPDF2 is required to process PDF files. Install it with: pip install PyPDF2")
+        except Exception as e:
+            raise Exception(f"Failed to extract PDF text: {str(e)}")
+    
     def _classify_document_type(self, file_path: str, content: str) -> str:
         """
         Classify the document type based on path and content.
@@ -143,6 +194,17 @@ class IngestionNode:
             return 'requirements'
         elif 'log' in file_path_lower:
             return 'logs'
+        elif file_path.endswith('.pdf'):
+            # Try to infer PDF type from content
+            content_lower = content.lower()
+            if 'resume' in content_lower or 'curriculum vitae' in content_lower or 'cv' in file_path_lower:
+                return 'resume'
+            elif 'policy' in content_lower or 'compliance' in content_lower:
+                return 'policy'
+            elif 'requirement' in content_lower or 'specification' in content_lower:
+                return 'requirements'
+            else:
+                return 'documentation'
         else:
             return 'documentation'
     

@@ -58,7 +58,7 @@ def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "grok_api_configured": bool(Config.GROK_API_KEY)
+        "grok_api_configured": bool(Config.GROQ_API_KEY)
     }
 
 
@@ -113,23 +113,13 @@ async def run_audit(files: List[UploadFile] = File(...)):
                 shutil.copyfileobj(file.file, buffer)
             
             uploaded_file_paths.append(file_path)
-        
-        # Run compliance audit
         graph = create_compliance_audit_graph()
         result = graph.run_api(uploaded_file_paths)
-        
-        # Add metadata
-        result["metadata"] = {
-            "session_id": session_id,
-            "files_analyzed": len(uploaded_file_paths),
-            "file_names": [os.path.basename(p) for p in uploaded_file_paths],
-            "timestamp": datetime.now().isoformat()
-        }
+        result["metadata"]["sessionId"] = session_id
         
         return JSONResponse(content=result)
     
     except Exception as e:
-        # Clean up on error
         if os.path.exists(session_folder):
             shutil.rmtree(session_folder)
         
@@ -139,14 +129,11 @@ async def run_audit(files: List[UploadFile] = File(...)):
         )
     
     finally:
-        # Clean up uploaded files after audit
-        # In production, you might want to keep these for some time
         try:
             if os.path.exists(session_folder):
                 shutil.rmtree(session_folder)
         except Exception as e:
             print(f"Warning: Failed to clean up session folder: {str(e)}")
-
 
 @app.get("/config")
 def get_config():

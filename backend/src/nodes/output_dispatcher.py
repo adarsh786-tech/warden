@@ -9,6 +9,8 @@ from datetime import datetime
 from typing import Dict, Any
 from src.state import ComplianceState, AuditReport
 from src.config import Config
+from types import MappingProxyType
+from enum import Enum
 
 
 class OutputDispatcherNode:
@@ -221,25 +223,30 @@ class OutputDispatcherNode:
         print(f"📄 Summary report saved: {filepath}")
     
     def _prepare_json_serializable(self, obj: Any) -> Any:
-        """
-        Convert objects to JSON-serializable format.
-        
-        Args:
-            obj: Object to convert
-            
-        Returns:
-            JSON-serializable version
-        """
+        if isinstance(obj, MappingProxyType):
+            return {k: self._prepare_json_serializable(v) for k, v in obj.items()}
+
         if isinstance(obj, dict):
             return {k: self._prepare_json_serializable(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
+
+        if isinstance(obj, list):
             return [self._prepare_json_serializable(item) for item in obj]
-        elif hasattr(obj, '__dict__'):
-            return self._prepare_json_serializable(obj.__dict__)
-        elif hasattr(obj, 'value'):  # For Enums
+
+        if isinstance(obj, Enum):
             return obj.value
-        else:
+
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+
+        # Only convert __dict__ for INSTANCES, not classes
+        if hasattr(obj, "__dict__") and not isinstance(obj, type):
+            return self._prepare_json_serializable(vars(obj))
+
+        # Fallback: stringify anything unsafe
+        if isinstance(obj, (str, int, float, bool)) or obj is None:
             return obj
+
+        return str(obj)
 
 
 def output_dispatcher_node(state: ComplianceState) -> ComplianceState:
