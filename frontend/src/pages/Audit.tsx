@@ -1,9 +1,10 @@
-import { Clock, CheckCircle2, PlayCircle, FileSearch } from "lucide-react";
+import { Clock, CheckCircle2, FileSearch } from "lucide-react";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Header from "../components/layout/Header";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { mockAuditInfo } from "../data/mockData";
+import AuditPopup from "../components/layout/AuditPopup";
 
 const auditHistory = [
   {
@@ -61,10 +62,7 @@ const Audits = () => {
               View past audits and their results
             </p>
           </div>
-          <Button className="gap-2">
-            <PlayCircle className="h-4 w-4" />
-            Run New Audit
-          </Button>
+          <AuditPopup />
         </div>
 
         {/* Audit List */}
