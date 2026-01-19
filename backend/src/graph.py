@@ -2,7 +2,8 @@
 LangGraph Workflow Definition - Connects all nodes into a workflow.
 Defines the compliance audit agent graph with conditional routing.
 """
-
+import os
+from datetime import datetime
 from langgraph.graph import StateGraph, END
 from src.state import ComplianceState, create_initial_state
 from src.nodes import (
@@ -212,13 +213,13 @@ class ComplianceAuditGraph:
     
     def run_api(self, file_paths: list) -> dict:
         """
-        Execute workflow for API usage - returns JSON-serializable result.
+        Execute workflow for API usage - returns JSON-serializable result matching frontend format.
         
         Args:
             file_paths: List of uploaded file paths
             
         Returns:
-            Dictionary containing audit results
+            Dictionary containing audit results in frontend-compatible format
         """
         # Create initial state
         initial_state = create_initial_state()
@@ -232,32 +233,167 @@ class ComplianceAuditGraph:
             compiled = self.compile()
             final_state = compiled.invoke(initial_state)
             
-            # Extract key results
+            # Get report data
+            report = final_state.get("final_report")
+            risk_assessment = report.get("risk_assessment") if report else None
+            violations = report.get("violations", []) if report else []
+            
+            # Transform to frontend format
             result = {
                 "success": len(final_state.get("errors", [])) == 0,
-                "audit_passed": final_state.get("audit_passed", False),
+                "status": "completed",
+                "auditPassed": final_state.get("audit_passed", False),
+                "complianceScore": report.get("compliance_score", 0) if report else 0,
+                "criticalIssues": risk_assessment.get("high_count", 0) if risk_assessment else 0,
+                "moderateIssues": risk_assessment.get("medium_count", 0) if risk_assessment else 0,
+                "lowIssues": risk_assessment.get("low_count", 0) if risk_assessment else 0,
+                "totalViolations": risk_assessment.get("total_issues", 0) if risk_assessment else 0,
+                "riskLevel": self._map_risk_level(risk_assessment.get("overall_risk", "unknown") if risk_assessment else "unknown"),
+                "missingArtifacts": len(report.get("missing_artifacts", [])) if report else 0,
+                "missingArtifactsList": report.get("missing_artifacts", []) if report else [],
+                "violations": self._serialize_violations_for_frontend(violations),
+                "recommendations": report.get("recommendations", []) if report else [],
+                "summary": report.get("summary", "") if report else "",
+                "auditInfo": {
+                    "status": "completed",
+                    "lastRun": report.get("timestamp") if report else datetime.now().isoformat(),
+                    "duration": self._calculate_duration(final_state),
+                    "rulesEvaluated": len(final_state.get("rules", [])),
+                    "artifactsScanned": len(final_state.get("documents", [])),
+                    "documentsAnalyzed": len(final_state.get("documents", [])),
+                },
+                "metadata": {
+                    "timestamp": report.get("timestamp") if report else datetime.now().isoformat(),
+                    "filesAnalyzed": len(file_paths),
+                    "fileNames": [os.path.basename(p) for p in file_paths],
+                },
                 "errors": final_state.get("errors", []),
                 "warnings": final_state.get("warnings", [])
             }
-            
-            # Add report if available
-            if final_state.get("final_report"):
-                report = final_state["final_report"]
-                result["report"] = {
-                    "timestamp": report.get("timestamp"),
-                    "compliance_score": report.get("compliance_score"),
-                    "risk_assessment": self._serialize_risk_assessment(report.get("risk_assessment")),
-                    "violations": self._serialize_violations(report.get("violations", [])),
-                    "missing_artifacts": report.get("missing_artifacts", []),
-                    "recommendations": report.get("recommendations", []),
-                    "summary": report.get("summary")
-                }
             
             return result
             
         finally:
             Config.VERBOSE = original_verbose
     
+    def _map_risk_level(self, backend_risk: str) -> str:
+        """Map backend risk levels to frontend expected values."""
+        risk_mapping = {
+            "critical": "critical",
+            "high": "high",
+            "moderate": "medium",
+            "low": "low",
+            "unknown": "low"
+        }
+        return risk_mapping.get(backend_risk, "low")
+
+    def _calculate_duration(self, state: ComplianceState) -> str:
+        """Calculate a human-readable duration string."""
+        # This is a simplified version - you could track actual start/end times
+        doc_count = len(state.get("documents", []))
+        rule_count = len(state.get("rules", []))
+        
+        # Rough estimate: 1s per document + 0.5s per rule
+        estimated_seconds = doc_count * 1 + rule_count * 0.5
+        
+        if estimated_seconds < 60:
+            return f"{int(estimated_seconds)}s"
+        else:
+            minutes = int(estimated_seconds // 60)
+            seconds = int(estimated_seconds % 60)
+            return f"{minutes}m {seconds}s"
+
+    def _serialize_violations_for_frontend(self, violations):
+        """Convert violations to frontend-compatible format with detailed information."""
+        serialized = []
+        
+        for i, v in enumerate(violations):
+            # Generate unique ID
+            violation_id = f"v-{str(i+1).zfill(3)}"
+            
+            # Map severity
+            severity_map = {
+                "high": "critical",
+                "medium": "high",
+                "low": "medium"
+            }
+            frontend_severity = severity_map.get(
+                v.get("severity").value if hasattr(v.get("severity"), "value") else v.get("severity"),
+                "medium"
+            )
+            
+            # Determine category from rule_id
+            category = self._determine_category(v.get("rule_id", ""))
+            
+            # Build violation object matching frontend structure
+            violation_obj = {
+                "id": violation_id,
+                "ruleId": v.get("rule_id"),
+                "title": v.get("rule_name"),
+                "description": v.get("explanation", "No description provided"),
+                "severity": frontend_severity,
+                "status": "open",  # Default status
+                "category": category,
+                "evidence": v.get("evidence", "No evidence provided"),
+                "reasoning": v.get("explanation", ""),
+                "remediation": self._generate_remediation(v),
+                "confidence": int(v.get("confidence", 0.8) * 100),  # Convert to percentage
+                "detectedAt": datetime.now().isoformat(),
+                "location": v.get("location", "Not specified")
+            }
+            
+            # Add reflection if available (from reflection notes)
+            if v.get("reflection_note"):
+                violation_obj["reflection"] = {
+                    "initialFinding": v.get("reflection_note", {}).get("original_finding", ""),
+                    "reflectionNotes": v.get("reflection_note", {}).get("reassessment", ""),
+                    "finalDecision": v.get("reflection_note", {}).get("action_taken", "confirmed")
+                }
+            
+            serialized.append(violation_obj)
+        
+        return serialized
+
+    def _determine_category(self, rule_id: str) -> str:
+        """Determine violation category from rule ID."""
+        if rule_id.startswith("SEC"):
+            return "Security"
+        elif rule_id.startswith("DOC"):
+            return "Documentation"
+        elif rule_id.startswith("PRIV"):
+            return "Privacy"
+        elif rule_id.startswith("AUTH"):
+            return "Authentication"
+        elif rule_id.startswith("LOG"):
+            return "Audit Logging"
+        elif rule_id.startswith("ACC"):
+            return "Access Control"
+        elif rule_id.startswith("DEP"):
+            return "Dependencies"
+        else:
+            return "General"
+
+    def _generate_remediation(self, violation: dict) -> str:
+        """Generate remediation steps for a violation."""
+        rule_id = violation.get("rule_id", "")
+        
+        # Default remediation templates
+        remediation_templates = {
+            "SEC-001": "1. Implement password hashing using bcrypt or argon2\n2. Update password storage logic\n3. Audit existing passwords and force reset\n4. Add password strength requirements",
+            "SEC-002": "1. Move API keys to environment variables\n2. Use a secrets management service (e.g., AWS Secrets Manager, HashiCorp Vault)\n3. Rotate exposed keys immediately\n4. Add pre-commit hooks to prevent future exposure",
+            "SEC-003": "1. Implement input validation for all user inputs\n2. Use parameterized queries for database operations\n3. Add sanitization middleware\n4. Conduct security review of all input handlers",
+            "SEC-004": "1. Enable logging for authentication events\n2. Implement structured logging with appropriate detail levels\n3. Set up log aggregation and monitoring\n4. Define log retention policies",
+            "SEC-005": "1. Enforce HTTPS for all connections\n2. Update configuration to redirect HTTP to HTTPS\n3. Implement HSTS headers\n4. Review all network communication paths",
+            "DOC-001": "1. Create README.md with project overview\n2. Include setup and installation instructions\n3. Document configuration options\n4. Add usage examples and troubleshooting guide",
+            "DOC-002": "1. Create SECURITY.md file\n2. Document security policies and procedures\n3. Include incident response plan\n4. Add contact information for security issues",
+            "DOC-003": "1. Create dependency manifest (requirements.txt, package.json, etc.)\n2. Document all dependencies with versions\n3. Set up dependency scanning\n4. Establish update procedures",
+            "PRIV-001": "1. Document PII collection practices\n2. Create data handling procedures\n3. Implement data classification\n4. Add privacy policy",
+            "PRIV-002": "1. Define data retention periods\n2. Implement automated data deletion\n3. Document retention policy\n4. Add user data export functionality"
+        }
+        
+        return remediation_templates.get(rule_id, 
+            f"1. Review and address the violation described above\n2. Update relevant code or documentation\n3. Verify compliance with {rule_id}\n4. Document changes made")
+
     def _serialize_risk_assessment(self, risk_assessment):
         """Convert risk assessment to JSON-serializable format."""
         if not risk_assessment:

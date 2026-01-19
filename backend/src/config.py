@@ -16,8 +16,7 @@ class Config:
     
     # Grok API Configuration
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    GROK_API_BASE: str = "https://api.x.ai/v1"
-    GROK_MODEL: str = "grok-beta"  # or "grok-2-latest" depending on your access
+    GROK_MODEL: str = "llama-3.3-70b-versatile"
     
     # Model Parameters
     TEMPERATURE: float = 0.1  # Low temperature for consistent, deterministic outputs
@@ -41,7 +40,7 @@ class Config:
     # API Settings (for FastAPI)
     UPLOAD_FOLDER: str = "uploads"
     MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50MB
-    ALLOWED_EXTENSIONS: set = {'.txt', '.md', '.py', '.json', '.yaml', '.yml', '.xml', '.js', '.java', '.go'}
+    ALLOWED_EXTENSIONS: set = {'.pdf', '.txt', '.md', '.py', '.json', '.yaml', '.yml', '.xml', '.js', '.java', '.go'}
     CORS_ORIGINS: list = ["*"]  # Allow all origins for now, restrict in production
     
     # Logging
@@ -62,7 +61,6 @@ class Config:
         """Return LLM configuration dictionary."""
         return {
             "api_key": cls.GROQ_API_KEY,
-            "base_url": cls.GROK_API_BASE,
             "model": cls.GROK_MODEL,
             "temperature": cls.TEMPERATURE,
             "max_tokens": cls.MAX_TOKENS,

@@ -21,7 +21,6 @@ class ReflectionNode:
         llm_config = Config.get_llm_config()
         self.llm = ChatGroq(
             api_key=llm_config["api_key"],
-            base_url=llm_config["base_url"],
             model=llm_config["model"],
             temperature=llm_config["temperature"],
             max_tokens=llm_config["max_tokens"]
