@@ -4,7 +4,6 @@ import {
   FileSearch,
   AlertTriangle,
   FileText,
-  Settings,
   Shield,
   HomeIcon,
 } from "lucide-react";
@@ -15,7 +14,6 @@ const navigation = [
   { name: "Audits", href: "/audits", icon: FileSearch },
   { name: "Violations", href: "/violations", icon: AlertTriangle },
   { name: "Reports", href: "/reports", icon: FileText },
-  { name: "Settings", href: "/settings", icon: Settings },
   { name: "Home", href: "/", icon: HomeIcon },
 ];
 
@@ -49,7 +47,7 @@ const Sidebar = () => {
                 "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
               )}
             >
               <item.icon
@@ -57,7 +55,7 @@ const Sidebar = () => {
                   "h-5 w-5 shrink-0",
                   isActive
                     ? "text-sidebar-primary"
-                    : "text-sidebar-muted group-hover:text-sidebar-foreground"
+                    : "text-sidebar-muted group-hover:text-sidebar-foreground",
                 )}
               />
               {item.name}
